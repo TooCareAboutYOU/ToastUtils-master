@@ -2,7 +2,7 @@
 
 1、顶部弹框：使用自定义依赖包，依赖包配置如下：
 
-    （1）在project根目录的build.gradle中添加(注：可各version自定义，也可直接复制项目生成的vertion)
+    （1）在project根目录的build.gradle中添加(注：可自定义version，也可直接复制项目生成的version)
 
         ext{
             configs=[
