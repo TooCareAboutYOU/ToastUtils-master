@@ -1,0 +1,292 @@
+import groovy.xml.MarkupBuilder
+
+/**
+ * 移至Android Studio环境下编译
+ */
+
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 28
+
+
+
+    defaultConfig {
+        minSdkVersion 16
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}
+
+////直接通过task函数创建
+task HelloTask(group: 'localtask', description: 'undefined') {
+
+    doFirst {
+        println('I am Gradle Task -->> doFirst')
+    }
+    doLast {
+        println('I am Gradle Task -->> doLast')
+    }
+}
+
+HelloTask.doLast {
+    println('doLast ' + group)
+}
+
+//通过TaskContainer创建Task
+this.tasks.create(group: 'localtask', name: 'HelloTask2') {
+    println('I am Gradle Task2 ')
+    setGroup('localtask')
+    setDescription('哈哈哈')
+}
+
+/**
+ * Task 添加依赖
+ */
+task taskX(group: 'localtask') {
+    doLast {
+        println('task X')
+    }
+}
+
+task taskY(group: 'localtask') {
+    doLast {
+        println('task Y')
+    }
+}
+//静态添加task依赖
+//方式一  推荐
+task taskZ(group: 'localtask', dependsOn: taskX) { // dependsOn:[taskX,taskY]
+    doLast {
+        println('task Z')
+    }
+}
+//  taskZ.dependsOn(taskX,taskY)   //方式二
+
+task lib1(group: 'localtask') << { println('task -->> lib1') }
+task lib2(group: 'localtask') << { println('task -->> lib2') }
+task nolib(group: 'localtask') << { println('task -->> nolib') }
+//动态指定依赖
+task taskDynamicLoading(group: 'localtask') {
+    dependsOn this.tasks.findAll { task -> return task.name.startsWith('lib') }   //动态加载依赖
+    doLast {
+        println('动态执行加载task')
+    }
+}
+
+//计算Build时长
+def startBuildTime, endBuildTime
+//保证task配置执行完成
+this.afterEvaluate { Project project ->
+    def preBuildTask = project.tasks.getByName('preBuild')
+    preBuildTask.doFirst {
+        startBuildTime = System.currentTimeMillis()
+        println("build开始时间：${startBuildTime}")
+    }
+    def endBuildTask = project.tasks.getByName('build')
+    endBuildTask.doLast {
+        endBuildTime = System.currentTimeMillis()
+        println("build结束时间：${endBuildTime}")
+        println("build耗时：${endBuildTime - startBuildTime}")
+    }
+}
+
+
+////文件的解析
+task HandleReleaseFile(group: 'localtask') {
+    def srcFile = file('release.xml')  //file : 当前module下可用
+//    def srcFile =new File('release.xml') //相对于根工程
+    def desDir = new File(this.buildDir, 'generated/release/')
+    doLast {
+        println('开始解析对应的xml文件。。。。。。。。。。。。。')
+        desDir.mkdir()
+        def releases = new XmlParser().parse(srcFile)
+        releases.release.each { releaseNode ->
+            //解析每一个release节点的内容
+            def code = releaseNode.versionCode.text()
+            def name = releaseNode.versionName.text()
+            def info = releaseNode.versionInfo.text()
+            //创建文件并写入节点数据
+            def destFile = new File(desDir, "release-${name}.text")
+            destFile.withWriter { write ->
+                write.write("${name} -> ${code} -> ${info}")
+            }
+        }
+    }
+}
+//测试HandleReleaseFile
+task HandleReleaseFileTest(group: 'localtask', dependsOn: HandleReleaseFile) {
+    def path = this.buildDir.path + '/generated/release/'
+    println('build路径：' + path)
+
+    def dir = fileTree(path)
+    doLast {
+        dir.each {
+            println '打印文件绝对路径：' + it
+        }
+        println '解析完成。。。。。。。。。。。。。'
+    }
+}
+
+/**
+ * Task 的输入输出
+ */
+
+def destFile
+ext {
+    versionCode = '103'
+    versionName = '1.0.3'
+    versionInfo = 'App第3个版本'
+    destFile = file('release.xml')
+    if (destFile != null && !destFile.exists()) {
+        destFile.createNewFile()
+    }
+}
+
+//自定义挂接，执行命令： ./gradlew  Gradlew:build
+this.project.afterEvaluate {
+    def buildTask=project.tasks.getByName('build')
+    if(buildTask == null){
+        throw GradleException('the build task is not found')
+    }
+    buildTask.doLast{
+        writeTask.execute()
+    }
+}
+
+task writeTask(group: 'localtask', description: 'task的输入') {
+    //为task指定输入
+    inputs.property('versionCode', this.versionCode)
+    inputs.property('versionName', this.versionName)
+    inputs.property('versionInfo', this.versionInfo)
+    outputs.file destFile
+
+    //为task指定输出
+    doLast {
+        def data = inputs.getProperties()
+        data.each { map ->
+            println '打印--->>>Write：'+map.key + '\t' + map.value
+        }
+
+        File file = outputs.getFiles().getSingleFile()
+        //将map转化成实体对象
+        def versionMsg = new VersionMsg(data)
+        //将实体对转化成xml数据
+        def sw = new StringWriter()
+        def xmlBuilder = new MarkupBuilder(sw)
+        if (file.text != null && file.text.size() <= 0) {
+            //文件中没有内容
+            xmlBuilder.release {
+                release {
+                    versionCode(versionMsg.versionCode)
+                    versionName(versionMsg.versionName)
+                    versionInfo(versionMsg.versionInfo)
+                }
+            }
+            file.withReader { write -> write.append(sw.toString()) }
+        } else {
+            //已有版本信息
+            xmlBuilder.release {
+                versionCode(versionMsg.versionCode)
+                versionName(versionMsg.versionName)
+                versionInfo(versionMsg.versionInfo)
+            }
+            //将生成的xml数据插入到根节点之前
+            def lines = file.readLines()
+            def lengths = lines.size() - 1
+            file.withWriter { write ->
+                lines.eachWithIndex{ String line, int i ->
+                    if (i != lengths){
+                        write.append(line+'\r\n')
+                    }else{
+                        write.append('\r\r\n'+sw.toString()+'\r\n')
+                        write.append(lines.get(lengths))
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+task readTask(group: 'localtask',description: 'task的输出'){
+    //指定输入文件为上一个task的输出
+    inputs.file destFile
+    if (destFile == null && !destFile.exists()) {
+        return
+    }
+    doLast{
+        def file=inputs.files.getSingleFile()
+        println 'Read 打印：'+file.text
+    }
+}
+
+class VersionMsg {
+    String versionCode
+    String versionName
+    String versionInfo
+}
+
+//先执行writeTask，再执行readTask
+task WriteReadTaskTest(group: 'localtask',dependsOn:[writeTask,readTask]){
+    doLast{
+        println '输入输出结束........'
+    }
+}
+
+/**
+ * 指定Task执行顺序
+ * mustRunAfter：强制（推荐使用）
+ * shouldRunAfter：非强制
+ */
+task taskA(group: 'localtask') {
+    doLast {
+        println('task A')
+    }
+}
+
+task taskB(group: 'localtask') {
+    mustRunAfter taskA   //关键字
+//    shouldRunAfter taskA
+    doLast {
+        println('task B')
+    }
+}
+
+task taskC(group: 'localtask') {
+    mustRunAfter taskB  //关键字
+//    shouldRunAfter taskB
+    doLast {
+        println('task C')
+    }
+}
+//执行terminal 命令：./gradlew taskB taskC taskA
+
+
+
+
+
+
+
+

@@ -1,0 +1,21 @@
+apply plugin: 'groovy' // 'com.android.library'
+//apply plugin: 'com.android.library'
+
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation localGroovy()
+}
+
+buildscript { ScriptHandler scriptHandler->
+
+    //配置工程的仓库地址
+    scriptHandler.repositories{RepositoryHandler repositoryHandler->
+        repositoryHandler.jcenter()
+    }
+    //配置工程的'插件'依赖地址
+    scriptHandler.dependencies{DependencyHandler dependencyHandler->
+
+    }
+}
+

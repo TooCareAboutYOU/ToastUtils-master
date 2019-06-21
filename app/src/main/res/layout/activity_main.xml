@@ -5,7 +5,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
-
+    <android.support.v4.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <android.support.v7.widget.AppCompatTextView
+            android:id="@+id/tvContactList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </android.support.v4.widget.NestedScrollView>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -28,7 +35,5 @@
         android:id="@+id/sv_status"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        app:dismissOnComplete="true"
-        android:visibility="gone"/>
-
+        app:dismissOnComplete="true"/>
 </FrameLayout>

@@ -1,34 +1,116 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.imooc.gradle.study'
 
-def config = rootProject.ext.configs;
-def lib = rootProject.ext.libs;
+def config = rootProject.ext.configs
+def lib = rootProject.ext.libs
+def mCompileSdkVersion = rootProject.ext.android.compileSdkVersion
 android {
-    compileSdkVersion config.compileSdkVersion
-    buildToolsVersion config.buildToolsVersion
+    compileSdkVersion mCompileSdkVersion //config.compileSdkVersion
     defaultConfig {
         applicationId "com.framework.android.toastutils"
         minSdkVersion 19
         targetSdkVersion config.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode config.versionCode
+        versionName config.versionName
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    sourceSets {
+        main {   //main 目录
+            jniLibs.srcDirs = ['libs']  // 修改so动态库存放位置
+        }
+    }
+    sourceSets {
+        main {   //main 目录
+            res.srcDirs = ['src/main/res', 'src/main/res-ad', 'src/main/res-player']
+        }
+    }
 }
 
+/**
+ * 遍历变体
+ */
+this.afterEvaluate {
+    this.android.applicationVariants.all { variant ->
+        def name = variant.name
+        def baseName = variant.baseName
+        println "打印：name-->> ${name}, base-->>${baseName}"
+    }
+}
+
+
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile "com.android.support:appcompat-v7:${libs.supportVersion}"
-    compile "com.android.support:design:${libs.supportVersion}"
-    compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    testCompile 'junit:junit:4.12'
-    compile project(':library')
+    implementation "com.android.support:appcompat-v7:${libs.supportVersion}"
+    implementation "com.android.support:design:${libs.supportVersion}"
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    testImplementation 'junit:junit:4.12'
+    implementation project(':library')
+    //    implementation 'com.github.tbruyelle:rxpermissions:0.10.2'
+    implementation 'com.yanzhenjie.permission:support:2.0.1'
+    implementation 'com.squareup.retrofit2:retrofit:2.5.0'
+    implementation 'com.facebook.rebound:rebound:0.3.8'
+}
+
+//文件拷贝
+copy {
+    from file('app.iml')
+    into getRootProject().getBuildDir()
+}
+
+//文件夹拷贝
+copy {
+    from file('build/outputs/apk/')
+    into getRootProject().getBuildDir().path + '/apk/'
+}
+
+//对文件树遍历
+fileTree('build/outputs/apk/') { FileTree tree ->
+    tree.visit { FileTreeElement element ->
+        println element.file.name + '\t' + element.file.absolutePath
+        copy {
+            from element.file
+            into getRootProject().getBuildDir().path + '/apks/'
+        }
+    }
+}
+
+//Gradle执行外部命令
+task('ApkCopy') {
+    doLast {
+        //gradle的执行阶段去执行
+        def sourcePath = this.buildDir.path + '/outputs/apk'
+        def targetPath = '/Users/zhangshuai/IdeaProjects/'
+        def command = "mv -f ${sourcePath} ${targetPath}"
+        exec {
+            try {
+                executable 'bash'
+                args '-c' command
+                println 'the commands is execute success'
+            } catch (GradleException e) {
+                println 'the commands is execute failed'
+                e.printStackTrace()
+            }
+        }
+    }
+}
+
+imoocReleaseInfo {
+    versionCode = config.versionCode
+    versionName = config.versionName
+    versionInfo = '第1个版本。。。'
+    fileName = 'src/release/res/values/values.xml'
 }

@@ -1,0 +1,19 @@
+ext{
+    android=[
+            compileSdkVersion: 28,
+            targetSdkVersion : 28
+    ]
+    libs=[
+
+    ]
+    java=[
+
+    ]
+    dependencies=[
+
+    ]
+    signConfig=[
+
+    ]
+}
+

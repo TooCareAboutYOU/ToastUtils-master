@@ -1,1 +1,6 @@
-include ':app', ':library'
+include ':app', ':lib', ':GradleTask', ':buildSrc'
+
+//扩展属性   gradle.properties文件中定义
+if (hasProperty("isLoadLibrary") ? isLoadLibrary.toBoolean() : false){
+    include ':library'
+}
