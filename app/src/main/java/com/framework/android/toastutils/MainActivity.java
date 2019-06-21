@@ -18,6 +18,8 @@ import com.facebook.rebound.SimpleSpringListener;
 import com.facebook.rebound.Spring;
 import com.facebook.rebound.SpringConfig;
 import com.facebook.rebound.SpringSystem;
+import com.lib.apihosts.ApiHost;
+import com.lib.apihosts.ApiService;
 import com.yanzhenjie.permission.Action;
 import com.yanzhenjie.permission.AndPermission;
 
@@ -35,7 +37,7 @@ import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.POST;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "MMainActivity";
     private ConnectionStatusView mStatusView;
@@ -44,27 +46,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     AppCompatTextView tvList;
 
-    Button btnShowTop,btnShowBottom;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mStatusView= (ConnectionStatusView) findViewById(R.id.sv_status);
-        btnShowTop=findViewById(R.id.btn_ShowTop);
-        btnShowTop.setOnClickListener(this);
-        btnShowBottom=findViewById(R.id.btn_ShowBottom);
-        btnShowBottom.setOnClickListener(this);
+        mStatusView = (ConnectionStatusView) findViewById(R.id.sv_status);
+        findViewById(R.id.btn_ShowTop).setOnClickListener(this);
+        findViewById(R.id.btn_ShowBottom).setOnClickListener(this);
 
 //        loadContacts();
-    }
 
+        com.lib.apihosts.ApiService.setApihost(ApiHost.API_HOST_DEBUG);
+        if (BuildConfig.DEBUG) {
+            Log.i(TAG, "onCreate: "+ com.lib.apihosts.ApiService.getApihost());
+        }
+    }
 
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.btn_ShowTop: {
                 mStatusView.setVisibility(View.VISIBLE);
                 mStatusView.setStatus(Status.COMPLETE);
@@ -74,16 +75,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Snackbar.make(v, "你哈", 1000).setAction("取消", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        startActivity(new Intent(MainActivity.this,TranslucentActivity.class));
+                        startActivity(new Intent(MainActivity.this, TranslucentActivity.class));
                     }
                 }).setDuration(Snackbar.LENGTH_LONG).show();
 
                 break;
             }
-            default:break;
+            default:
+                break;
         }
     }
-
 
 
     private String BaseUrl = "http://ces.drivekool.cn/index.php/home/";

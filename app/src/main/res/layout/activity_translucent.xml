@@ -20,8 +20,8 @@
 
     <com.pnikosis.materialishprogress.ProgressWheel
         android:id="@+id/progress"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="88dp"
+        android:layout_height="88dp"
         wheel:matProg_barColor="@color/color_white"
         wheel:matProg_progressIndeterminate="true"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -30,5 +30,11 @@
         app:layout_constraintBottom_toBottomOf="parent"
         wheel:matProg_barWidth="2dp"
         android:layout_centerVertical="true"/>
+
+    <android.support.v7.widget.AppCompatButton
+        android:id="@+id/acBtn_Cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cancel"/>
 
 </android.support.constraint.ConstraintLayout>

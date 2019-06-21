@@ -35,6 +35,10 @@ android {
             res.srcDirs = ['src/main/res', 'src/main/res-ad', 'src/main/res-player']
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 /**
@@ -63,6 +67,7 @@ dependencies {
     implementation 'com.yanzhenjie.permission:support:2.0.1'
     implementation 'com.squareup.retrofit2:retrofit:2.5.0'
     implementation 'com.facebook.rebound:rebound:0.3.8'
+    implementation project(':lib_apihost')
 }
 
 //文件拷贝

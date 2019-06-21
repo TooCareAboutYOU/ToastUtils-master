@@ -1,4 +1,4 @@
-include ':app', ':lib', ':GradleTask', ':buildSrc'
+include ':app', ':lib', ':GradleTask', ':buildSrc', ':lib_apihost', ':Java8_StreamAPI'
 
 //扩展属性   gradle.properties文件中定义
 if (hasProperty("isLoadLibrary") ? isLoadLibrary.toBoolean() : false){
